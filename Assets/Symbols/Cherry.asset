@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae4245cd3efc1ac4eb3c3803b96134e2, type: 3}
   m_Name: Cherry
   m_EditorClassIdentifier: Assembly-CSharp::SymbolData
-  SymbolId: 
+  SymbolId: Cherry
+  displayName: Cherry
   sprite: {fileID: 21300000, guid: db1c7fb88f7414c4a9af866be05f1a13, type: 3}
-  payout: 50
+  payoutMultiplier: 5

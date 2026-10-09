@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae4245cd3efc1ac4eb3c3803b96134e2, type: 3}
   m_Name: Ring
   m_EditorClassIdentifier: Assembly-CSharp::SymbolData
-  SymbolId: 
+  SymbolId: Bell
+  displayName: Bell
   sprite: {fileID: 21300000, guid: 6ef2e3c0d85021a45a9d6f5ef2ffa6b2, type: 3}
-  payout: 100
+  payoutMultiplier: 8
