@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 
 public static class SlotSceneBuilder {
@@ -33,7 +34,18 @@ public static class SlotSceneBuilder {
         // Load TMP Font Asset
         TMP_FontAsset tmpFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset");
 
-        // 2. Setup Canvas
+        // 2. Setup EventSystem (CRITICAL for UI Buttons & Clicks)
+        GameObject eventSystemGo = new GameObject("EventSystem");
+        eventSystemGo.AddComponent<EventSystem>();
+        // Add Input System UI Input Module or Standalone Module
+        var inputModuleType = System.Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
+        if (inputModuleType != null) {
+            eventSystemGo.AddComponent(inputModuleType);
+        } else {
+            eventSystemGo.AddComponent<StandaloneInputModule>();
+        }
+
+        // 3. Setup Canvas
         GameObject canvasGo = new GameObject("SlotCanvas");
         Canvas canvas = canvasGo.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -53,17 +65,7 @@ public static class SlotSceneBuilder {
         Image bgImg = bgGo.GetComponent<Image>();
         bgImg.sprite = bgSprite;
         bgImg.color = Color.white;
-
-        // Flash Overlay Image (Jackpot flash)
-        GameObject flashGo = new GameObject("ScreenFlashOverlay", typeof(RectTransform), typeof(Image));
-        flashGo.transform.SetParent(canvasGo.transform, false);
-        RectTransform flashRt = flashGo.GetComponent<RectTransform>();
-        flashRt.anchorMin = Vector2.zero;
-        flashRt.anchorMax = Vector2.one;
-        flashRt.sizeDelta = Vector2.zero;
-        Image flashImg = flashGo.GetComponent<Image>();
-        flashImg.color = new Color(1f, 0.9f, 0.2f, 0f);
-        flashImg.raycastTarget = false;
+        bgImg.raycastTarget = false; // Never block clicks
 
         // Main Machine Panel
         GameObject machineGo = new GameObject("MachinePanel", typeof(RectTransform), typeof(Image));
@@ -74,6 +76,7 @@ public static class SlotSceneBuilder {
         Image machineImg = machineGo.GetComponent<Image>();
         machineImg.sprite = machineSprite;
         machineImg.preserveAspect = true;
+        machineImg.raycastTarget = false;
 
         // Middle Reel Frame Box
         GameObject frameBoxGo = new GameObject("ReelFrameBox", typeof(RectTransform), typeof(Image));
@@ -84,6 +87,7 @@ public static class SlotSceneBuilder {
         Image frameBoxImg = frameBoxGo.GetComponent<Image>();
         frameBoxImg.sprite = middleBoxSprite;
         frameBoxImg.preserveAspect = true;
+        frameBoxImg.raycastTarget = false;
 
         // Reels Container (with RectMask2D)
         GameObject reelsContainer = new GameObject("ReelsContainer", typeof(RectTransform), typeof(RectMask2D));
@@ -128,6 +132,7 @@ public static class SlotSceneBuilder {
                 Image slotImg = slotGo.GetComponent<Image>();
                 slotImg.sprite = allSymbols[(s + r) % allSymbols.Length].sprite;
                 slotImg.preserveAspect = true;
+                slotImg.raycastTarget = false;
 
                 SlotSymbol symComp = slotGo.GetComponent<SlotSymbol>();
                 symComp.SetSymbol(allSymbols[(s + r) % allSymbols.Length]);
@@ -156,6 +161,27 @@ public static class SlotSceneBuilder {
         Image winLineImg = winLineGo.GetComponent<Image>();
         winLineImg.color = new Color(1f, 0.85f, 0.2f, 0.5f);
         winLineImg.raycastTarget = false;
+
+        // Win Highlight Panel (Golden glow border)
+        GameObject winHighlightGo = new GameObject("WinHighlightGlow", typeof(RectTransform), typeof(Image));
+        winHighlightGo.transform.SetParent(frameBoxGo.transform, false);
+        RectTransform winHighlightRt = winHighlightGo.GetComponent<RectTransform>();
+        winHighlightRt.sizeDelta = new Vector2(520, 280);
+        Image winHighlightImg = winHighlightGo.GetComponent<Image>();
+        winHighlightImg.color = new Color(1f, 0.9f, 0.2f, 0.35f);
+        winHighlightImg.raycastTarget = false;
+        winHighlightGo.SetActive(false);
+
+        // Flash Overlay Image (Jackpot flash)
+        GameObject flashGo = new GameObject("ScreenFlashOverlay", typeof(RectTransform), typeof(Image));
+        flashGo.transform.SetParent(canvasGo.transform, false);
+        RectTransform flashRt = flashGo.GetComponent<RectTransform>();
+        flashRt.anchorMin = Vector2.zero;
+        flashRt.anchorMax = Vector2.one;
+        flashRt.sizeDelta = Vector2.zero;
+        Image flashImg = flashGo.GetComponent<Image>();
+        flashImg.color = new Color(1f, 0.9f, 0.2f, 0f);
+        flashImg.raycastTarget = false;
 
         // Bottom Controls Bar
         GameObject controlsGo = new GameObject("ControlsBar", typeof(RectTransform));
@@ -189,6 +215,7 @@ public static class SlotSceneBuilder {
         spinRt.anchoredPosition = new Vector2(340, 0);
         Image spinImg = spinBtnGo.GetComponent<Image>();
         spinImg.color = new Color(0.95f, 0.25f, 0.2f, 1f); // Vibrant slot spin red
+        spinImg.raycastTarget = true;
         Button spinButton = spinBtnGo.GetComponent<Button>();
 
         // Spin Button Text (TMP)
@@ -203,6 +230,7 @@ public static class SlotSceneBuilder {
         spinText.fontStyle = FontStyles.Bold;
         spinText.alignment = TextAlignmentOptions.Center;
         spinText.color = Color.white;
+        spinText.raycastTarget = false;
 
         // Result Status Text (Above controls)
         GameObject statusGo = new GameObject("ResultStatusText", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -217,16 +245,7 @@ public static class SlotSceneBuilder {
         statusText.fontStyle = FontStyles.Bold;
         statusText.alignment = TextAlignmentOptions.Center;
         statusText.color = Color.yellow;
-
-        // Win Highlight Panel (Golden glow border)
-        GameObject winHighlightGo = new GameObject("WinHighlightGlow", typeof(RectTransform), typeof(Image));
-        winHighlightGo.transform.SetParent(frameBoxGo.transform, false);
-        RectTransform winHighlightRt = winHighlightGo.GetComponent<RectTransform>();
-        winHighlightRt.sizeDelta = new Vector2(520, 280);
-        Image winHighlightImg = winHighlightGo.GetComponent<Image>();
-        winHighlightImg.color = new Color(1f, 0.9f, 0.2f, 0.35f);
-        winHighlightImg.raycastTarget = false;
-        winHighlightGo.SetActive(false);
+        statusText.raycastTarget = false;
 
         // Jackpot Banner (Celebration popup)
         GameObject jackpotGo = new GameObject("JackpotBanner", typeof(RectTransform), typeof(Image));
@@ -236,6 +255,7 @@ public static class SlotSceneBuilder {
         jackpotRt.anchoredPosition = new Vector2(0, 180);
         Image jackpotImg = jackpotGo.GetComponent<Image>();
         jackpotImg.color = new Color(0.1f, 0.1f, 0.1f, 0.92f);
+        jackpotImg.raycastTarget = false;
 
         GameObject jackpotTxtGo = new GameObject("JackpotText", typeof(RectTransform), typeof(TextMeshProUGUI));
         jackpotTxtGo.transform.SetParent(jackpotGo.transform, false);
@@ -248,6 +268,7 @@ public static class SlotSceneBuilder {
         jackpotTxt.fontStyle = FontStyles.Bold;
         jackpotTxt.alignment = TextAlignmentOptions.Center;
         jackpotTxt.color = new Color(1f, 0.85f, 0.1f, 1f);
+        jackpotTxt.raycastTarget = false;
         jackpotGo.SetActive(false);
 
         // Setup Game Systems GameObject
@@ -294,14 +315,9 @@ public static class SlotSceneBuilder {
         mgrSo.FindProperty("audioController").objectReferenceValue = audio;
         mgrSo.ApplyModifiedProperties();
 
-        // Setup Button Listeners
-        spinButton.onClick.AddListener(manager.Spin);
-        incBetBtn.onClick.AddListener(manager.IncreaseBet);
-        decBetBtn.onClick.AddListener(manager.DecreaseBet);
-
         // Save scene
         EditorSceneManager.SaveScene(scene, scenePath);
-        Debug.Log("Successfully created and configured SlotMachine scene with TextMeshPro at " + scenePath);
+        Debug.Log("Successfully created and configured SlotMachine scene with TextMeshPro and EventSystem at " + scenePath);
 
         // Add to Build Settings
         EditorBuildSettingsScene[] buildScenes = new EditorBuildSettingsScene[] {
@@ -318,6 +334,7 @@ public static class SlotSceneBuilder {
         panelRt.anchoredPosition = pos;
         Image panelImg = panelGo.GetComponent<Image>();
         panelImg.color = new Color(0.12f, 0.12f, 0.16f, 0.85f);
+        panelImg.raycastTarget = false;
 
         // Title Label
         GameObject labelGo = new GameObject("TitleLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -332,6 +349,7 @@ public static class SlotSceneBuilder {
         labelTxt.fontStyle = FontStyles.Bold;
         labelTxt.alignment = TextAlignmentOptions.Center;
         labelTxt.color = new Color(0.8f, 0.8f, 0.8f, 1f);
+        labelTxt.raycastTarget = false;
 
         // Value Text
         GameObject valGo = new GameObject("ValueText", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -346,6 +364,7 @@ public static class SlotSceneBuilder {
         valTxt.fontStyle = FontStyles.Bold;
         valTxt.alignment = TextAlignmentOptions.Center;
         valTxt.color = Color.white;
+        valTxt.raycastTarget = false;
 
         return panelGo;
     }
@@ -358,6 +377,7 @@ public static class SlotSceneBuilder {
         btnRt.anchoredPosition = pos;
         Image btnImg = btnGo.GetComponent<Image>();
         btnImg.color = new Color(0.25f, 0.25f, 0.35f, 1f);
+        btnImg.raycastTarget = true;
 
         GameObject txtGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
         txtGo.transform.SetParent(btnGo.transform, false);
@@ -370,6 +390,7 @@ public static class SlotSceneBuilder {
         btnTxt.fontStyle = FontStyles.Bold;
         btnTxt.alignment = TextAlignmentOptions.Center;
         btnTxt.color = Color.white;
+        btnTxt.raycastTarget = false; // Never block parent button clicks
 
         return btnGo.GetComponent<Button>();
     }

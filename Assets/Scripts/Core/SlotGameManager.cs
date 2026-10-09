@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SlotGameManager : MonoBehaviour {
     [Header("Core References")]
@@ -46,6 +47,24 @@ public class SlotGameManager : MonoBehaviour {
             uiController.SetStatusMessage("Press SPIN to play!", Color.white);
             uiController.ClearWinEffects();
             uiController.UpdateWinAmount(0);
+
+            // Runtime button click listener bindings (guarantees buttons work in Play mode)
+            if (uiController.SpinButton != null) {
+                uiController.SpinButton.onClick.RemoveListener(Spin);
+                uiController.SpinButton.onClick.AddListener(Spin);
+            }
+            if (uiController.IncreaseBetButton != null) {
+                uiController.IncreaseBetButton.onClick.RemoveListener(IncreaseBet);
+                uiController.IncreaseBetButton.onClick.AddListener(IncreaseBet);
+            }
+            if (uiController.DecreaseBetButton != null) {
+                uiController.DecreaseBetButton.onClick.RemoveListener(DecreaseBet);
+                uiController.DecreaseBetButton.onClick.AddListener(DecreaseBet);
+            }
+            if (uiController.MaxBetButton != null) {
+                uiController.MaxBetButton.onClick.RemoveListener(SetMaxBet);
+                uiController.MaxBetButton.onClick.AddListener(SetMaxBet);
+            }
         }
     }
 
@@ -128,6 +147,13 @@ public class SlotGameManager : MonoBehaviour {
     private void OnDestroy() {
         if (wallet != null) {
             wallet.OnBalanceChanged -= HandleBalanceChanged;
+        }
+
+        if (uiController != null) {
+            if (uiController.SpinButton != null) uiController.SpinButton.onClick.RemoveListener(Spin);
+            if (uiController.IncreaseBetButton != null) uiController.IncreaseBetButton.onClick.RemoveListener(IncreaseBet);
+            if (uiController.DecreaseBetButton != null) uiController.DecreaseBetButton.onClick.RemoveListener(DecreaseBet);
+            if (uiController.MaxBetButton != null) uiController.MaxBetButton.onClick.RemoveListener(SetMaxBet);
         }
     }
 

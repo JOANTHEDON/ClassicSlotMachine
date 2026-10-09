@@ -16,6 +16,11 @@ public class SlotUIController : MonoBehaviour {
     [SerializeField] private Button decreaseBetButton;
     [SerializeField] private Button maxBetButton;
 
+    public Button SpinButton => spinButton;
+    public Button IncreaseBetButton => increaseBetButton;
+    public Button DecreaseBetButton => decreaseBetButton;
+    public Button MaxBetButton => maxBetButton;
+
     [Header("Win & Jackpot Effects")]
     [SerializeField] private GameObject winHighlightPanel;
     [SerializeField] private GameObject jackpotBanner;
