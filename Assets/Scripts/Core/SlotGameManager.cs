@@ -49,6 +49,82 @@ public class SlotGameManager : MonoBehaviour {
         }
     }
 
+    private void Update() {
+        // Developer shortcut test keys (Editor only or Debug builds)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        HandleDebugInput();
+#endif
+    }
+
+    private void HandleDebugInput() {
+        if (isPlaying || rng == null || rng.AvailableSymbols == null) return;
+
+        // Spacebar -> Normal Spin
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            Spin();
+        }
+        // Alpha1 (1 key) -> Force 7-7-7 Jackpot
+        else if (Input.GetKeyDown(KeyCode.Alpha1)) {
+            ForceSymbolOutcome("7");
+        }
+        // Alpha2 (2 key) -> Force BAR-BAR-BAR
+        else if (Input.GetKeyDown(KeyCode.Alpha2)) {
+            ForceSymbolOutcome("BAR");
+        }
+        // Alpha3 (3 key) -> Force Bell-Bell-Bell
+        else if (Input.GetKeyDown(KeyCode.Alpha3)) {
+            ForceSymbolOutcome("Bell");
+        }
+        // Alpha4 (4 key) -> Force Cherry-Cherry-Cherry
+        else if (Input.GetKeyDown(KeyCode.Alpha4)) {
+            ForceSymbolOutcome("Cherry");
+        }
+        // Alpha5 (5 key) -> Force Guaranteed Loss
+        else if (Input.GetKeyDown(KeyCode.Alpha5)) {
+            ForceLosingOutcome();
+        }
+        // KeypadPlus or UpArrow -> Increase Bet
+        else if (Input.GetKeyDown(KeyCode.Equals) || Input.GetKeyDown(KeyCode.KeypadPlus) || Input.GetKeyDown(KeyCode.UpArrow)) {
+            IncreaseBet();
+        }
+        // KeypadMinus or DownArrow -> Decrease Bet
+        else if (Input.GetKeyDown(KeyCode.Minus) || Input.GetKeyDown(KeyCode.KeypadMinus) || Input.GetKeyDown(KeyCode.DownArrow)) {
+            DecreaseBet();
+        }
+        // C key -> Free +500 Coins
+        else if (Input.GetKeyDown(KeyCode.C)) {
+            if (wallet != null) {
+                wallet.AddCoins(500);
+            }
+        }
+    }
+
+    private void ForceSymbolOutcome(string symbolId) {
+        SymbolData target = null;
+        foreach (var sym in rng.AvailableSymbols) {
+            if (sym != null && (string.Equals(sym.SymbolId, symbolId, System.StringComparison.OrdinalIgnoreCase) ||
+                                sym.name.IndexOf(symbolId, System.StringComparison.OrdinalIgnoreCase) >= 0)) {
+                target = sym;
+                break;
+            }
+        }
+        if (target != null) {
+            ForceSpin(target);
+        }
+    }
+
+    private void ForceLosingOutcome() {
+        if (rng.AvailableSymbols.Length < 2) return;
+        if (wallet != null && !wallet.HasEnoughCoins(currentBet)) return;
+
+        SymbolData[] forcedResult = new SymbolData[reels.Length];
+        forcedResult[0] = rng.AvailableSymbols[0];
+        forcedResult[1] = rng.AvailableSymbols[1 % rng.AvailableSymbols.Length];
+        forcedResult[2] = rng.AvailableSymbols[rng.AvailableSymbols.Length > 2 ? 2 : 0];
+
+        StartCoroutine(SpinRoutine(forcedResult));
+    }
+
     private void OnDestroy() {
         if (wallet != null) {
             wallet.OnBalanceChanged -= HandleBalanceChanged;
@@ -106,7 +182,6 @@ public class SlotGameManager : MonoBehaviour {
         StartCoroutine(SpinRoutine(null));
     }
 
-    // Developer Test Spin to force outcomes for testing
     public void ForceSpin(SymbolData forcedSymbol) {
         if (isPlaying) return;
         if (wallet != null && !wallet.HasEnoughCoins(currentBet)) return;

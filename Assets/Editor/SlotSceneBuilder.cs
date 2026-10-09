@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public static class SlotSceneBuilder {
     [MenuItem("Slot Machine/Build Complete Slot Machine Scene")]
@@ -28,6 +29,9 @@ public static class SlotSceneBuilder {
         SymbolData barData = AssetDatabase.LoadAssetAtPath<SymbolData>("Assets/Symbols/Bar.asset");
 
         SymbolData[] allSymbols = new SymbolData[] { sevenData, cherryData, bellData, barData };
+
+        // Load TMP Font Asset
+        TMP_FontAsset tmpFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset");
 
         // 2. Setup Canvas
         GameObject canvasGo = new GameObject("SlotCanvas");
@@ -110,7 +114,6 @@ public static class SlotSceneBuilder {
             symContainerRt.anchoredPosition = Vector2.zero;
 
             // 5 symbol slots to allow seamless looping
-            // Index 0: Top-off (+170), Index 1: Top (+85), Index 2: Center (0), Index 3: Bottom (-85), Index 4: Bottom-off (-170)
             float cellHeight = 85f;
             float[] yOffsets = new float[] { 170f, 85f, 0f, -85f, -170f };
             SlotSymbol[] slots = new SlotSymbol[5];
@@ -162,23 +165,23 @@ public static class SlotSceneBuilder {
         controlsRt.anchoredPosition = new Vector2(0, -420);
 
         // Balance Panel
-        GameObject balPanel = CreateTextPanel(controlsGo.transform, "BalancePanel", new Vector2(-360, 0), new Vector2(200, 90), "BALANCE", "1,000");
-        Text balValueText = balPanel.transform.Find("ValueText").GetComponent<Text>();
+        GameObject balPanel = CreateTmpPanel(controlsGo.transform, "BalancePanel", new Vector2(-360, 0), new Vector2(200, 90), "BALANCE", "1,000", tmpFont);
+        TextMeshProUGUI balValueText = balPanel.transform.Find("ValueText").GetComponent<TextMeshProUGUI>();
 
         // Win Panel
-        GameObject winPanel = CreateTextPanel(controlsGo.transform, "WinPanel", new Vector2(-140, 0), new Vector2(200, 90), "WIN", "0");
-        Text winValueText = winPanel.transform.Find("ValueText").GetComponent<Text>();
+        GameObject winPanel = CreateTmpPanel(controlsGo.transform, "WinPanel", new Vector2(-140, 0), new Vector2(200, 90), "WIN", "0", tmpFont);
+        TextMeshProUGUI winValueText = winPanel.transform.Find("ValueText").GetComponent<TextMeshProUGUI>();
 
         // Bet Panel with +/- Buttons
-        GameObject betPanel = CreateTextPanel(controlsGo.transform, "BetPanel", new Vector2(100, 0), new Vector2(220, 90), "BET", "10");
-        Text betValueText = betPanel.transform.Find("ValueText").GetComponent<Text>();
+        GameObject betPanel = CreateTmpPanel(controlsGo.transform, "BetPanel", new Vector2(100, 0), new Vector2(220, 90), "BET", "10", tmpFont);
+        TextMeshProUGUI betValueText = betPanel.transform.Find("ValueText").GetComponent<TextMeshProUGUI>();
 
         // Decrease Bet Button (-)
-        Button decBetBtn = CreateSimpleButton(betPanel.transform, "DecBetButton", new Vector2(-75, -12), new Vector2(36, 36), "-", 24);
+        Button decBetBtn = CreateTmpButton(betPanel.transform, "DecBetButton", new Vector2(-75, -12), new Vector2(36, 36), "-", 24, tmpFont);
         // Increase Bet Button (+)
-        Button incBetBtn = CreateSimpleButton(betPanel.transform, "IncBetButton", new Vector2(75, -12), new Vector2(36, 36), "+", 24);
+        Button incBetBtn = CreateTmpButton(betPanel.transform, "IncBetButton", new Vector2(75, -12), new Vector2(36, 36), "+", 24, tmpFont);
 
-        // Spin Button (Right side, using Lever/Spin artwork or styled button)
+        // Spin Button
         GameObject spinBtnGo = new GameObject("SpinButton", typeof(RectTransform), typeof(Image), typeof(Button));
         spinBtnGo.transform.SetParent(controlsGo.transform, false);
         RectTransform spinRt = spinBtnGo.GetComponent<RectTransform>();
@@ -188,31 +191,31 @@ public static class SlotSceneBuilder {
         spinImg.color = new Color(0.95f, 0.25f, 0.2f, 1f); // Vibrant slot spin red
         Button spinButton = spinBtnGo.GetComponent<Button>();
 
-        // Spin Button Text
-        GameObject spinTxtGo = new GameObject("Label", typeof(RectTransform), typeof(Text));
+        // Spin Button Text (TMP)
+        GameObject spinTxtGo = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
         spinTxtGo.transform.SetParent(spinBtnGo.transform, false);
         RectTransform spinTxtRt = spinTxtGo.GetComponent<RectTransform>();
         spinTxtRt.sizeDelta = spinRt.sizeDelta;
-        Text spinText = spinTxtGo.GetComponent<Text>();
+        TextMeshProUGUI spinText = spinTxtGo.GetComponent<TextMeshProUGUI>();
         spinText.text = "SPIN";
-        spinText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        spinText.fontSize = 32;
-        spinText.fontStyle = FontStyle.Bold;
-        spinText.alignment = TextAnchor.MiddleCenter;
+        if (tmpFont != null) spinText.font = tmpFont;
+        spinText.fontSize = 34;
+        spinText.fontStyle = FontStyles.Bold;
+        spinText.alignment = TextAlignmentOptions.Center;
         spinText.color = Color.white;
 
         // Result Status Text (Above controls)
-        GameObject statusGo = new GameObject("ResultStatusText", typeof(RectTransform), typeof(Text));
+        GameObject statusGo = new GameObject("ResultStatusText", typeof(RectTransform), typeof(TextMeshProUGUI));
         statusGo.transform.SetParent(canvasGo.transform, false);
         RectTransform statusRt = statusGo.GetComponent<RectTransform>();
         statusRt.sizeDelta = new Vector2(900, 50);
         statusRt.anchoredPosition = new Vector2(0, -325);
-        Text statusText = statusGo.GetComponent<Text>();
+        TextMeshProUGUI statusText = statusGo.GetComponent<TextMeshProUGUI>();
         statusText.text = "PRESS SPIN TO PLAY";
-        statusText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        statusText.fontSize = 28;
-        statusText.fontStyle = FontStyle.Bold;
-        statusText.alignment = TextAnchor.MiddleCenter;
+        if (tmpFont != null) statusText.font = tmpFont;
+        statusText.fontSize = 30;
+        statusText.fontStyle = FontStyles.Bold;
+        statusText.alignment = TextAlignmentOptions.Center;
         statusText.color = Color.yellow;
 
         // Win Highlight Panel (Golden glow border)
@@ -232,18 +235,18 @@ public static class SlotSceneBuilder {
         jackpotRt.sizeDelta = new Vector2(700, 160);
         jackpotRt.anchoredPosition = new Vector2(0, 180);
         Image jackpotImg = jackpotGo.GetComponent<Image>();
-        jackpotImg.color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+        jackpotImg.color = new Color(0.1f, 0.1f, 0.1f, 0.92f);
 
-        GameObject jackpotTxtGo = new GameObject("JackpotText", typeof(RectTransform), typeof(Text));
+        GameObject jackpotTxtGo = new GameObject("JackpotText", typeof(RectTransform), typeof(TextMeshProUGUI));
         jackpotTxtGo.transform.SetParent(jackpotGo.transform, false);
         RectTransform jackpotTxtRt = jackpotTxtGo.GetComponent<RectTransform>();
         jackpotTxtRt.sizeDelta = jackpotRt.sizeDelta;
-        Text jackpotTxt = jackpotTxtGo.GetComponent<Text>();
+        TextMeshProUGUI jackpotTxt = jackpotTxtGo.GetComponent<TextMeshProUGUI>();
         jackpotTxt.text = "★ JACKPOT! 777 ★";
-        jackpotTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        jackpotTxt.fontSize = 46;
-        jackpotTxt.fontStyle = FontStyle.Bold;
-        jackpotTxt.alignment = TextAnchor.MiddleCenter;
+        if (tmpFont != null) jackpotTxt.font = tmpFont;
+        jackpotTxt.fontSize = 48;
+        jackpotTxt.fontStyle = FontStyles.Bold;
+        jackpotTxt.alignment = TextAlignmentOptions.Center;
         jackpotTxt.color = new Color(1f, 0.85f, 0.1f, 1f);
         jackpotGo.SetActive(false);
 
@@ -298,7 +301,7 @@ public static class SlotSceneBuilder {
 
         // Save scene
         EditorSceneManager.SaveScene(scene, scenePath);
-        Debug.Log("Successfully created and configured SlotMachine scene at " + scenePath);
+        Debug.Log("Successfully created and configured SlotMachine scene with TextMeshPro at " + scenePath);
 
         // Add to Build Settings
         EditorBuildSettingsScene[] buildScenes = new EditorBuildSettingsScene[] {
@@ -307,7 +310,7 @@ public static class SlotSceneBuilder {
         EditorBuildSettings.scenes = buildScenes;
     }
 
-    private static GameObject CreateTextPanel(Transform parent, string name, Vector2 pos, Vector2 size, string label, string defaultValue) {
+    private static GameObject CreateTmpPanel(Transform parent, string name, Vector2 pos, Vector2 size, string label, string defaultValue, TMP_FontAsset font) {
         GameObject panelGo = new GameObject(name, typeof(RectTransform), typeof(Image));
         panelGo.transform.SetParent(parent, false);
         RectTransform panelRt = panelGo.GetComponent<RectTransform>();
@@ -317,37 +320,37 @@ public static class SlotSceneBuilder {
         panelImg.color = new Color(0.12f, 0.12f, 0.16f, 0.85f);
 
         // Title Label
-        GameObject labelGo = new GameObject("TitleLabel", typeof(RectTransform), typeof(Text));
+        GameObject labelGo = new GameObject("TitleLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
         labelGo.transform.SetParent(panelGo.transform, false);
         RectTransform labelRt = labelGo.GetComponent<RectTransform>();
-        labelRt.sizeDelta = new Vector2(size.x, 24);
+        labelRt.sizeDelta = new Vector2(size.x, 26);
         labelRt.anchoredPosition = new Vector2(0, size.y * 0.25f);
-        Text labelTxt = labelGo.GetComponent<Text>();
+        TextMeshProUGUI labelTxt = labelGo.GetComponent<TextMeshProUGUI>();
         labelTxt.text = label;
-        labelTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        labelTxt.fontSize = 15;
-        labelTxt.fontStyle = FontStyle.Bold;
-        labelTxt.alignment = TextAnchor.MiddleCenter;
+        if (font != null) labelTxt.font = font;
+        labelTxt.fontSize = 16;
+        labelTxt.fontStyle = FontStyles.Bold;
+        labelTxt.alignment = TextAlignmentOptions.Center;
         labelTxt.color = new Color(0.8f, 0.8f, 0.8f, 1f);
 
         // Value Text
-        GameObject valGo = new GameObject("ValueText", typeof(RectTransform), typeof(Text));
+        GameObject valGo = new GameObject("ValueText", typeof(RectTransform), typeof(TextMeshProUGUI));
         valGo.transform.SetParent(panelGo.transform, false);
         RectTransform valRt = valGo.GetComponent<RectTransform>();
-        valRt.sizeDelta = new Vector2(size.x, 36);
+        valRt.sizeDelta = new Vector2(size.x, 38);
         valRt.anchoredPosition = new Vector2(0, -size.y * 0.15f);
-        Text valTxt = valGo.GetComponent<Text>();
+        TextMeshProUGUI valTxt = valGo.GetComponent<TextMeshProUGUI>();
         valTxt.text = defaultValue;
-        valTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        valTxt.fontSize = 24;
-        valTxt.fontStyle = FontStyle.Bold;
-        valTxt.alignment = TextAnchor.MiddleCenter;
+        if (font != null) valTxt.font = font;
+        valTxt.fontSize = 26;
+        valTxt.fontStyle = FontStyles.Bold;
+        valTxt.alignment = TextAlignmentOptions.Center;
         valTxt.color = Color.white;
 
         return panelGo;
     }
 
-    private static Button CreateSimpleButton(Transform parent, string name, Vector2 pos, Vector2 size, string text, int fontSize) {
+    private static Button CreateTmpButton(Transform parent, string name, Vector2 pos, Vector2 size, string text, int fontSize, TMP_FontAsset font) {
         GameObject btnGo = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
         btnGo.transform.SetParent(parent, false);
         RectTransform btnRt = btnGo.GetComponent<RectTransform>();
@@ -356,16 +359,16 @@ public static class SlotSceneBuilder {
         Image btnImg = btnGo.GetComponent<Image>();
         btnImg.color = new Color(0.25f, 0.25f, 0.35f, 1f);
 
-        GameObject txtGo = new GameObject("Text", typeof(RectTransform), typeof(Text));
+        GameObject txtGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
         txtGo.transform.SetParent(btnGo.transform, false);
         RectTransform txtRt = txtGo.GetComponent<RectTransform>();
         txtRt.sizeDelta = size;
-        Text btnTxt = txtGo.GetComponent<Text>();
+        TextMeshProUGUI btnTxt = txtGo.GetComponent<TextMeshProUGUI>();
         btnTxt.text = text;
-        btnTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        if (font != null) btnTxt.font = font;
         btnTxt.fontSize = fontSize;
-        btnTxt.fontStyle = FontStyle.Bold;
-        btnTxt.alignment = TextAnchor.MiddleCenter;
+        btnTxt.fontStyle = FontStyles.Bold;
+        btnTxt.alignment = TextAlignmentOptions.Center;
         btnTxt.color = Color.white;
 
         return btnGo.GetComponent<Button>();

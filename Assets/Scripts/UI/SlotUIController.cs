@@ -1,13 +1,14 @@
 using System.Collections;
 using UnityEngine;
+using TMPro;
 using UnityEngine.UI;
 
 public class SlotUIController : MonoBehaviour {
-    [Header("Labels & Text Displays (Legacy UI Text or Any Text)")]
-    [SerializeField] private Text balanceText;
-    [SerializeField] private Text betText;
-    [SerializeField] private Text winAmountText;
-    [SerializeField] private Text resultStatusText;
+    [Header("TextMeshPro Displays")]
+    [SerializeField] private TextMeshProUGUI balanceText;
+    [SerializeField] private TextMeshProUGUI betText;
+    [SerializeField] private TextMeshProUGUI winAmountText;
+    [SerializeField] private TextMeshProUGUI resultStatusText;
 
     [Header("Buttons")]
     [SerializeField] private Button spinButton;
