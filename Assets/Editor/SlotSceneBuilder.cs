@@ -16,8 +16,8 @@ public static class SlotSceneBuilder {
         // Load Sprites
         Sprite bgSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/bg_gradient.png");
         Sprite machineSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot-machine1.png");
-        Sprite leverUpSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot-machine2.png");
-        Sprite leverDownSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot-machine3.png");
+        Sprite leverIdleSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot-machine2.png");
+        Sprite leverPulledSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot-machine3.png");
         Sprite middleBoxSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot_machine_Middle_box.png");
         Sprite btn2Sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot_machine_buttons-02.png");
         Sprite btn3Sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot_machine_buttons-03.png");
@@ -37,7 +37,6 @@ public static class SlotSceneBuilder {
         // 2. Setup EventSystem (CRITICAL for UI Buttons & Clicks)
         GameObject eventSystemGo = new GameObject("EventSystem");
         eventSystemGo.AddComponent<EventSystem>();
-        // Add Input System UI Input Module or Standalone Module
         var inputModuleType = System.Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
         if (inputModuleType != null) {
             eventSystemGo.AddComponent(inputModuleType);
@@ -67,14 +66,14 @@ public static class SlotSceneBuilder {
         bgImg.color = Color.white;
         bgImg.raycastTarget = false; // Never block clicks
 
-        // Main Machine Panel
+        // Main Machine Panel (Uses slot-machine2 by default for lever up)
         GameObject machineGo = new GameObject("MachinePanel", typeof(RectTransform), typeof(Image));
         machineGo.transform.SetParent(canvasGo.transform, false);
         RectTransform machineRt = machineGo.GetComponent<RectTransform>();
         machineRt.sizeDelta = new Vector2(1020, 780);
         machineRt.anchoredPosition = new Vector2(0, 40);
         Image machineImg = machineGo.GetComponent<Image>();
-        machineImg.sprite = machineSprite;
+        machineImg.sprite = leverIdleSprite != null ? leverIdleSprite : machineSprite;
         machineImg.preserveAspect = true;
         machineImg.raycastTarget = false;
 
@@ -300,6 +299,11 @@ public static class SlotSceneBuilder {
         uiSo.FindProperty("winHighlightPanel").objectReferenceValue = winHighlightGo;
         uiSo.FindProperty("jackpotBanner").objectReferenceValue = jackpotGo;
         uiSo.FindProperty("screenFlashImage").objectReferenceValue = flashImg;
+
+        // Wire Lever artwork images
+        uiSo.FindProperty("machineImage").objectReferenceValue = machineImg;
+        uiSo.FindProperty("leverIdleSprite").objectReferenceValue = leverIdleSprite;
+        uiSo.FindProperty("leverPulledSprite").objectReferenceValue = leverPulledSprite;
         uiSo.ApplyModifiedProperties();
 
         // Wire SlotGameManager
@@ -317,7 +321,7 @@ public static class SlotSceneBuilder {
 
         // Save scene
         EditorSceneManager.SaveScene(scene, scenePath);
-        Debug.Log("Successfully created and configured SlotMachine scene with TextMeshPro and EventSystem at " + scenePath);
+        Debug.Log("Successfully created and configured SlotMachine scene with Lever Swap at " + scenePath);
 
         // Add to Build Settings
         EditorBuildSettingsScene[] buildScenes = new EditorBuildSettingsScene[] {
@@ -390,7 +394,7 @@ public static class SlotSceneBuilder {
         btnTxt.fontStyle = FontStyles.Bold;
         btnTxt.alignment = TextAlignmentOptions.Center;
         btnTxt.color = Color.white;
-        btnTxt.raycastTarget = false; // Never block parent button clicks
+        btnTxt.raycastTarget = false;
 
         return btnGo.GetComponent<Button>();
     }

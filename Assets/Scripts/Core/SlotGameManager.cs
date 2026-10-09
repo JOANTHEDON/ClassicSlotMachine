@@ -47,6 +47,7 @@ public class SlotGameManager : MonoBehaviour {
             uiController.SetStatusMessage("Press SPIN to play!", Color.white);
             uiController.ClearWinEffects();
             uiController.UpdateWinAmount(0);
+            uiController.SetLeverPulled(false);
 
             // Runtime button click listener bindings (guarantees buttons work in Play mode)
             if (uiController.SpinButton != null) {
@@ -228,6 +229,8 @@ public class SlotGameManager : MonoBehaviour {
             uiController.ClearWinEffects();
             uiController.UpdateWinAmount(0);
             uiController.SetStatusMessage("Spinning...", Color.yellow);
+            // Swap lever to pulled down (slot-machine3)
+            uiController.SetLeverPulled(true);
         }
 
         // Deduct bet once
@@ -263,6 +266,11 @@ public class SlotGameManager : MonoBehaviour {
 
         if (audioController != null) {
             audioController.StopSpinLoop();
+        }
+
+        // Return lever to idle state (slot-machine2) once all reels have completed spinning
+        if (uiController != null) {
+            uiController.SetLeverPulled(false);
         }
 
         // Step 4: Evaluate outcome

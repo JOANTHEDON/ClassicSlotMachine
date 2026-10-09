@@ -21,12 +21,27 @@ public class SlotUIController : MonoBehaviour {
     public Button DecreaseBetButton => decreaseBetButton;
     public Button MaxBetButton => maxBetButton;
 
+    [Header("Machine / Lever Artwork")]
+    [SerializeField] private Image machineImage;
+    [SerializeField] private Sprite leverIdleSprite;    // slot-machine2 (lever up)
+    [SerializeField] private Sprite leverPulledSprite;  // slot-machine3 (lever pulled down)
+
     [Header("Win & Jackpot Effects")]
     [SerializeField] private GameObject winHighlightPanel;
     [SerializeField] private GameObject jackpotBanner;
     [SerializeField] private Image screenFlashImage;
 
     private Coroutine flashRoutine;
+
+    public void SetLeverPulled(bool pulled) {
+        if (machineImage != null) {
+            if (pulled && leverPulledSprite != null) {
+                machineImage.sprite = leverPulledSprite;
+            } else if (!pulled && leverIdleSprite != null) {
+                machineImage.sprite = leverIdleSprite;
+            }
+        }
+    }
 
     public void UpdateBalance(int balance) {
         if (balanceText != null) {
