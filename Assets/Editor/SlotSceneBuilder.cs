@@ -19,9 +19,6 @@ public static class SlotSceneBuilder {
         Sprite leverIdleSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot-machine2.png");
         Sprite leverPulledSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot-machine3.png");
         Sprite middleBoxSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot_machine_Middle_box.png");
-        Sprite btn2Sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot_machine_buttons-02.png");
-        Sprite btn3Sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot_machine_buttons-03.png");
-        Sprite btn4Sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Slot Machine/slot_machine_buttons-04.png");
 
         // Load Symbol Data ScriptableObjects
         SymbolData sevenData = AssetDatabase.LoadAssetAtPath<SymbolData>("Assets/Symbols/Seven.asset");
@@ -64,46 +61,81 @@ public static class SlotSceneBuilder {
         Image bgImg = bgGo.GetComponent<Image>();
         bgImg.sprite = bgSprite;
         bgImg.color = Color.white;
-        bgImg.raycastTarget = false; // Never block clicks
+        bgImg.raycastTarget = false;
 
-        // Main Machine Panel (Uses slot-machine2 by default for lever up)
+        // Flash Overlay Image (Jackpot flash)
+        GameObject flashGo = new GameObject("ScreenFlashOverlay", typeof(RectTransform), typeof(Image));
+        flashGo.transform.SetParent(canvasGo.transform, false);
+        RectTransform flashRt = flashGo.GetComponent<RectTransform>();
+        flashRt.anchorMin = Vector2.zero;
+        flashRt.anchorMax = Vector2.one;
+        flashRt.sizeDelta = Vector2.zero;
+        Image flashImg = flashGo.GetComponent<Image>();
+        flashImg.color = new Color(1f, 0.9f, 0.2f, 0f);
+        flashImg.raycastTarget = false;
+
+        // Main Machine Panel (Base body)
         GameObject machineGo = new GameObject("MachinePanel", typeof(RectTransform), typeof(Image));
         machineGo.transform.SetParent(canvasGo.transform, false);
         RectTransform machineRt = machineGo.GetComponent<RectTransform>();
         machineRt.sizeDelta = new Vector2(1020, 780);
         machineRt.anchoredPosition = new Vector2(0, 40);
         Image machineImg = machineGo.GetComponent<Image>();
-        machineImg.sprite = leverIdleSprite != null ? leverIdleSprite : machineSprite;
+        machineImg.sprite = machineSprite;
         machineImg.preserveAspect = true;
         machineImg.raycastTarget = false;
 
-        // Middle Reel Frame Box
-        GameObject frameBoxGo = new GameObject("ReelFrameBox", typeof(RectTransform), typeof(Image));
-        frameBoxGo.transform.SetParent(machineGo.transform, false);
-        RectTransform frameBoxRt = frameBoxGo.GetComponent<RectTransform>();
-        frameBoxRt.sizeDelta = new Vector2(560, 310);
-        frameBoxRt.anchoredPosition = new Vector2(-28, -25);
-        Image frameBoxImg = frameBoxGo.GetComponent<Image>();
-        frameBoxImg.sprite = middleBoxSprite;
-        frameBoxImg.preserveAspect = true;
-        frameBoxImg.raycastTarget = false;
+        // Animated Lever Overlay (Rendered directly over machine arm on right)
+        GameObject leverOverlayGo = new GameObject("LeverOverlay", typeof(RectTransform), typeof(Image));
+        leverOverlayGo.transform.SetParent(machineGo.transform, false);
+        RectTransform leverRt = leverOverlayGo.GetComponent<RectTransform>();
+        leverRt.anchorMin = Vector2.zero;
+        leverRt.anchorMax = Vector2.one;
+        leverRt.sizeDelta = Vector2.zero;
+        Image leverImg = leverOverlayGo.GetComponent<Image>();
+        leverImg.sprite = leverIdleSprite;
+        leverImg.preserveAspect = true;
+        leverImg.raycastTarget = false;
 
-        // Reels Container (with RectMask2D)
+        // Reels Container (with RectMask2D) - Form-fitted to the middle window
         GameObject reelsContainer = new GameObject("ReelsContainer", typeof(RectTransform), typeof(RectMask2D));
-        reelsContainer.transform.SetParent(frameBoxGo.transform, false);
+        reelsContainer.transform.SetParent(machineGo.transform, false);
         RectTransform reelsRt = reelsContainer.GetComponent<RectTransform>();
-        reelsRt.sizeDelta = new Vector2(500, 260);
-        reelsRt.anchoredPosition = Vector2.zero;
+        // Window is perfectly masked inside the dark frame opening
+        reelsRt.sizeDelta = new Vector2(500, 200);
+        reelsRt.anchoredPosition = new Vector2(-28, -25);
+
+        // Center Win Line Indicator
+        GameObject winLineGo = new GameObject("CenterWinLine", typeof(RectTransform), typeof(Image));
+        winLineGo.transform.SetParent(reelsContainer.transform, false);
+        RectTransform winLineRt = winLineGo.GetComponent<RectTransform>();
+        winLineRt.sizeDelta = new Vector2(500, 3);
+        winLineRt.anchoredPosition = Vector2.zero;
+        Image winLineImg = winLineGo.GetComponent<Image>();
+        winLineImg.color = new Color(1f, 0.85f, 0.2f, 0.45f);
+        winLineImg.raycastTarget = false;
+
+        // Win Highlight Glow
+        GameObject winHighlightGo = new GameObject("WinHighlightGlow", typeof(RectTransform), typeof(Image));
+        winHighlightGo.transform.SetParent(reelsContainer.transform, false);
+        RectTransform winHighlightRt = winHighlightGo.GetComponent<RectTransform>();
+        winHighlightRt.sizeDelta = new Vector2(500, 70);
+        winHighlightRt.anchoredPosition = Vector2.zero;
+        Image winHighlightImg = winHighlightGo.GetComponent<Image>();
+        winHighlightImg.color = new Color(1f, 0.9f, 0.2f, 0.3f);
+        winHighlightImg.raycastTarget = false;
+        winHighlightGo.SetActive(false);
 
         // Create 3 Reels
         float[] reelXPositions = new float[] { -155f, 0f, 155f };
         SlotReel[] createdReels = new SlotReel[3];
+        float cellHeight = 68f;
 
         for (int r = 0; r < 3; r++) {
             GameObject reelGo = new GameObject($"Reel_{r + 1}", typeof(RectTransform), typeof(SlotReel));
             reelGo.transform.SetParent(reelsContainer.transform, false);
             RectTransform reelRt = reelGo.GetComponent<RectTransform>();
-            reelRt.sizeDelta = new Vector2(140, 260);
+            reelRt.sizeDelta = new Vector2(130, 200);
             reelRt.anchoredPosition = new Vector2(reelXPositions[r], 0);
 
             SlotReel reelComponent = reelGo.GetComponent<SlotReel>();
@@ -113,19 +145,19 @@ public static class SlotSceneBuilder {
             GameObject symContainerGo = new GameObject("SymbolContainer", typeof(RectTransform));
             symContainerGo.transform.SetParent(reelGo.transform, false);
             RectTransform symContainerRt = symContainerGo.GetComponent<RectTransform>();
-            symContainerRt.sizeDelta = new Vector2(140, 260);
+            symContainerRt.sizeDelta = new Vector2(130, 200);
             symContainerRt.anchoredPosition = Vector2.zero;
 
-            // 5 symbol slots to allow seamless looping
-            float cellHeight = 85f;
-            float[] yOffsets = new float[] { 170f, 85f, 0f, -85f, -170f };
+            // 5 symbol slots to allow seamless looping without visual clipping
+            // Slot 0: Top (+68), Slot 1: Center (0), Slot 2: Bottom (-68), Slot 3: (+136), Slot 4: (-136)
+            float[] yOffsets = new float[] { cellHeight, 0f, -cellHeight, cellHeight * 2f, -cellHeight * 2f };
             SlotSymbol[] slots = new SlotSymbol[5];
 
             for (int s = 0; s < 5; s++) {
                 GameObject slotGo = new GameObject($"SymbolSlot_{s}", typeof(RectTransform), typeof(Image), typeof(SlotSymbol));
                 slotGo.transform.SetParent(symContainerRt, false);
                 RectTransform slotRt = slotGo.GetComponent<RectTransform>();
-                slotRt.sizeDelta = new Vector2(75, 75);
+                slotRt.sizeDelta = new Vector2(62, 62);
                 slotRt.anchoredPosition = new Vector2(0, yOffsets[s]);
 
                 Image slotImg = slotGo.GetComponent<Image>();
@@ -150,37 +182,6 @@ public static class SlotSceneBuilder {
             }
             so.ApplyModifiedProperties();
         }
-
-        // Center Win Line Indicator
-        GameObject winLineGo = new GameObject("CenterWinLine", typeof(RectTransform), typeof(Image));
-        winLineGo.transform.SetParent(frameBoxGo.transform, false);
-        RectTransform winLineRt = winLineGo.GetComponent<RectTransform>();
-        winLineRt.sizeDelta = new Vector2(510, 4);
-        winLineRt.anchoredPosition = Vector2.zero;
-        Image winLineImg = winLineGo.GetComponent<Image>();
-        winLineImg.color = new Color(1f, 0.85f, 0.2f, 0.5f);
-        winLineImg.raycastTarget = false;
-
-        // Win Highlight Panel (Golden glow border)
-        GameObject winHighlightGo = new GameObject("WinHighlightGlow", typeof(RectTransform), typeof(Image));
-        winHighlightGo.transform.SetParent(frameBoxGo.transform, false);
-        RectTransform winHighlightRt = winHighlightGo.GetComponent<RectTransform>();
-        winHighlightRt.sizeDelta = new Vector2(520, 280);
-        Image winHighlightImg = winHighlightGo.GetComponent<Image>();
-        winHighlightImg.color = new Color(1f, 0.9f, 0.2f, 0.35f);
-        winHighlightImg.raycastTarget = false;
-        winHighlightGo.SetActive(false);
-
-        // Flash Overlay Image (Jackpot flash)
-        GameObject flashGo = new GameObject("ScreenFlashOverlay", typeof(RectTransform), typeof(Image));
-        flashGo.transform.SetParent(canvasGo.transform, false);
-        RectTransform flashRt = flashGo.GetComponent<RectTransform>();
-        flashRt.anchorMin = Vector2.zero;
-        flashRt.anchorMax = Vector2.one;
-        flashRt.sizeDelta = Vector2.zero;
-        Image flashImg = flashGo.GetComponent<Image>();
-        flashImg.color = new Color(1f, 0.9f, 0.2f, 0f);
-        flashImg.raycastTarget = false;
 
         // Bottom Controls Bar
         GameObject controlsGo = new GameObject("ControlsBar", typeof(RectTransform));
@@ -213,7 +214,7 @@ public static class SlotSceneBuilder {
         spinRt.sizeDelta = new Vector2(180, 85);
         spinRt.anchoredPosition = new Vector2(340, 0);
         Image spinImg = spinBtnGo.GetComponent<Image>();
-        spinImg.color = new Color(0.95f, 0.25f, 0.2f, 1f); // Vibrant slot spin red
+        spinImg.color = new Color(0.95f, 0.25f, 0.2f, 1f);
         spinImg.raycastTarget = true;
         Button spinButton = spinBtnGo.GetComponent<Button>();
 
@@ -300,8 +301,8 @@ public static class SlotSceneBuilder {
         uiSo.FindProperty("jackpotBanner").objectReferenceValue = jackpotGo;
         uiSo.FindProperty("screenFlashImage").objectReferenceValue = flashImg;
 
-        // Wire Lever artwork images
-        uiSo.FindProperty("machineImage").objectReferenceValue = machineImg;
+        // Wire Lever image
+        uiSo.FindProperty("machineImage").objectReferenceValue = leverImg;
         uiSo.FindProperty("leverIdleSprite").objectReferenceValue = leverIdleSprite;
         uiSo.FindProperty("leverPulledSprite").objectReferenceValue = leverPulledSprite;
         uiSo.ApplyModifiedProperties();
@@ -321,7 +322,7 @@ public static class SlotSceneBuilder {
 
         // Save scene
         EditorSceneManager.SaveScene(scene, scenePath);
-        Debug.Log("Successfully created and configured SlotMachine scene with Lever Swap at " + scenePath);
+        Debug.Log("Successfully generated clean, non-overlapping Slot Machine layout at " + scenePath);
 
         // Add to Build Settings
         EditorBuildSettingsScene[] buildScenes = new EditorBuildSettingsScene[] {

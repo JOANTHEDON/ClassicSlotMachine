@@ -6,7 +6,7 @@ public class SlotReel : MonoBehaviour {
     [Header("Reel Configuration")]
     [SerializeField] private RectTransform symbolContainer;
     [SerializeField] private SlotSymbol[] symbolSlots;
-    [SerializeField] private float cellHeight = 130f;
+    [SerializeField] private float cellHeight = 70f;
     [SerializeField] private float spinSpeed = 2200f;
     [SerializeField] private AnimationCurve stopCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
@@ -23,14 +23,20 @@ public class SlotReel : MonoBehaviour {
             symbolSlots = GetComponentsInChildren<SlotSymbol>(true);
         }
 
-        // Fill initial symbols
-        if (rng != null && rng.AvailableSymbols != null && rng.AvailableSymbols.Length > 0) {
+        // Align slots neatly initially:
+        // Slot 0: Top (+cellHeight)
+        // Slot 1: Center (0)
+        // Slot 2: Bottom (-cellHeight)
+        // Remaining slots placed outside
+        if (symbolSlots != null && symbolSlots.Length >= 3) {
             for (int i = 0; i < symbolSlots.Length; i++) {
-                symbolSlots[i].SetSymbol(rng.GetRandomSymbol());
+                float y = (1 - i) * cellHeight; // i=0 -> +cellHeight, i=1 -> 0, i=2 -> -cellHeight, i=3 -> -2*cellHeight...
+                symbolSlots[i].RectTransform.anchoredPosition = new Vector2(0, y);
+                if (rng != null) {
+                    symbolSlots[i].SetSymbol(rng.GetRandomSymbol());
+                }
             }
-            if (symbolSlots.Length >= 2) {
-                currentCenterSymbol = symbolSlots[1].GetSymbol();
-            }
+            currentCenterSymbol = symbolSlots[1].GetSymbol();
         }
     }
 
@@ -71,10 +77,10 @@ public class SlotReel : MonoBehaviour {
             yield return null;
         }
 
-        // Align and display target in center
+        // Align and display target in center slot (Slot 1)
         SetFinalResult(targetSymbol);
 
-        // Small landing bounce
+        // Landing bounce
         yield return StartCoroutine(BounceRoutine());
 
         isSpinning = false;
@@ -84,8 +90,9 @@ public class SlotReel : MonoBehaviour {
         if (symbolSlots == null || symbolSlots.Length == 0) return;
 
         int count = symbolSlots.Length;
-        float topThreshold = (count / 2f) * cellHeight;
-        float bottomThreshold = -((count / 2f) * cellHeight);
+        float topThreshold = 2f * cellHeight;
+        float bottomThreshold = -2f * cellHeight;
+        float cycleSpan = count * cellHeight;
 
         for (int i = 0; i < count; i++) {
             RectTransform rt = symbolSlots[i].RectTransform;
@@ -93,8 +100,7 @@ public class SlotReel : MonoBehaviour {
 
             if (rt.anchoredPosition.y < bottomThreshold) {
                 // Recycle to top
-                float overshoot = bottomThreshold - rt.anchoredPosition.y;
-                rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, topThreshold - overshoot);
+                rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, rt.anchoredPosition.y + cycleSpan);
 
                 // Assign a new random symbol during spin
                 if (rng != null) {
@@ -108,42 +114,53 @@ public class SlotReel : MonoBehaviour {
         currentCenterSymbol = targetSymbol;
         if (symbolSlots == null || symbolSlots.Length < 3) return;
 
-        // Position slots symmetrically around center (y = 0)
-        // slot 0: Top (y = +cellHeight)
-        // slot 1: Center (y = 0) -> targetSymbol
-        // slot 2: Bottom (y = -cellHeight)
+        // Exactly align:
+        // Slot 0: Top (+cellHeight)
+        // Slot 1: Center (0) -> targetSymbol
+        // Slot 2: Bottom (-cellHeight)
         symbolSlots[1].RectTransform.anchoredPosition = Vector2.zero;
         symbolSlots[1].SetSymbol(targetSymbol);
 
-        if (symbolSlots.Length > 0 && rng != null) {
+        if (rng != null) {
             symbolSlots[0].RectTransform.anchoredPosition = new Vector2(0, cellHeight);
             symbolSlots[0].SetSymbol(rng.GetRandomSymbol());
-        }
 
-        if (symbolSlots.Length > 2 && rng != null) {
             symbolSlots[2].RectTransform.anchoredPosition = new Vector2(0, -cellHeight);
             symbolSlots[2].SetSymbol(rng.GetRandomSymbol());
+
+            // Park any extra recycling slots safely away outside the visible mask
+            for (int i = 3; i < symbolSlots.Length; i++) {
+                symbolSlots[i].RectTransform.anchoredPosition = new Vector2(0, (i - 1) * cellHeight);
+            }
         }
     }
 
     private IEnumerator BounceRoutine() {
-        if (symbolSlots == null || symbolSlots.Length < 2) yield break;
+        if (symbolSlots == null || symbolSlots.Length < 3) yield break;
 
         float bounceDuration = 0.15f;
-        float bounceOvershoot = 12f;
+        float bounceOvershoot = 8f;
         float elapsed = 0f;
 
-        Vector2 basePos = symbolSlots[1].RectTransform.anchoredPosition;
+        Vector2 pos0 = symbolSlots[0].RectTransform.anchoredPosition;
+        Vector2 pos1 = symbolSlots[1].RectTransform.anchoredPosition;
+        Vector2 pos2 = symbolSlots[2].RectTransform.anchoredPosition;
 
         while (elapsed < bounceDuration) {
             elapsed += Time.deltaTime;
             float t = elapsed / bounceDuration;
             float offset = Mathf.Sin(t * Mathf.PI) * bounceOvershoot;
-            symbolSlots[1].RectTransform.anchoredPosition = basePos + new Vector2(0, -offset);
+            Vector2 downOffset = new Vector2(0, -offset);
+
+            symbolSlots[0].RectTransform.anchoredPosition = pos0 + downOffset;
+            symbolSlots[1].RectTransform.anchoredPosition = pos1 + downOffset;
+            symbolSlots[2].RectTransform.anchoredPosition = pos2 + downOffset;
             yield return null;
         }
 
-        symbolSlots[1].RectTransform.anchoredPosition = basePos;
+        symbolSlots[0].RectTransform.anchoredPosition = pos0;
+        symbolSlots[1].RectTransform.anchoredPosition = pos1;
+        symbolSlots[2].RectTransform.anchoredPosition = pos2;
     }
 
     public void SetHighlight(bool enable) {
